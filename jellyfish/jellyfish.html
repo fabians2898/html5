@@ -1,0 +1,123 @@
+<html>
+<head>
+   <title>jellyfish</title>
+<link href='style.css' rel='stylesheet' type='text/css'>
+<script>
+window.onload = function(){
+   var canvas = document.getElementById("canvas");
+   var ctx = canvas.getContext("2d");
+   
+   //El canvas ocupa toda la pantalla
+   var W = window.innerWidth, H = window.innerHeight;
+   canvas.width = W;
+   canvas.height = H;
+   
+   var particles = [];
+   var mouse = {};
+   
+   //creamos algunas particulas
+   var particle_count =45;
+   for(var i = 0; i < particle_count; i++)
+   {
+      particles.push(new particle());
+   }
+   
+   //Seguimiento de mouse
+   canvas.addEventListener('mousemove', track_mouse, false);
+   
+   function track_mouse(e)
+   {
+      //dado que el canvas ocupa toda la pantalla la posicion del mouse
+      //relativa al documento sera suficiente
+      mouse.x = e.pageX;
+      mouse.y = e.pageY;
+   }
+   
+   function particle()
+   {
+      //speed, life, location, life, colors
+      //speed.x rango = -2.5 to 2.5 
+      //speed.y rango = -15 to -5 to make it move upwards
+      
+      //cambiamos la velocidad Y para que parezca una llama
+      this.speed = {x: -30.5+Math.random()*5, y: 15+Math.random()*10};
+      
+      //location = coordenadas del mouse
+      //Ahora las particulas siguen al mouse .)
+      if(mouse.x && mouse.y)
+      {
+         this.location = {x: mouse.x, y: mouse.y};
+      }
+      else
+      {
+         this.location = {x: W/2, y: H/2};
+      }
+      
+      //rango del radio = 10-50
+      this.radius = 10+Math.random()*40;
+      
+      //rango de vida de las particulas = 20-50
+      this.life = 20+Math.random()*30;
+      this.remaining_life = this.life;
+      //colores
+      this.r = Math.round(Math.random()*255);
+      this.g = Math.round(Math.random()*255);
+      this.b = Math.round(Math.random()*255);
+   }
+   
+   function draw()
+   {
+      //Pintamos el canvas de negro
+      //Time for lighting magic
+      //hacemos luminosas las particulas
+      //en el proximo frame el background es pintado normalmente 
+      //sin mezclarse con el anterior
+      
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "lighter";
+      
+      for(var i = 0; i < particles.length; i++)
+      {
+         var p = particles[i];
+         ctx.beginPath();
+         //cambiando la opacidad de la
+         p.opacity = Math.round(p.remaining_life/p.life*100)/100
+         //coloca un degradado en vez del relleno blanco por defecto
+         var gradient = ctx.createRadialGradient(p.location.x, p.location.y, 0, p.location.x, p.location.y, p.radius);
+         gradient.addColorStop(0, "rgba("+p.r+", "+p.g+", "+p.b+", "+p.opacity+")");
+         gradient.addColorStop(0.5, "rgba("+p.r+", "+p.g+", "+p.b+", "+p.opacity+")");
+         gradient.addColorStop(1, "rgba("+p.r+", "+p.g+", "+p.b+", 0)");
+         ctx.fillStyle = gradient;
+         ctx.arc(p.location.x, p.location.y, p.radius, Math.PI*2, false);
+         ctx.fill();
+         
+         //movamos las particulas
+         p.remaining_life++;
+         p.radius--;
+         //con esto les añadimos velocidad, pero no me gusto tanto la verdad
+         //p.location.x += p.speed.x;
+         //p.location.y += p.speed.y;
+         
+         //regenerar las particulas
+         if(p.remaining_life < 0 || p.radius < 0)
+         {
+            //una nueva particula reemplaza una recien muerta
+            particles[i] = new particle();
+         }
+      }
+   }
+   
+   setInterval(draw, 25);
+}
+</script>
+</head>
+
+<body>
+
+<canvas id="canvas">
+</canvas>
+
+</body>
+</html>
